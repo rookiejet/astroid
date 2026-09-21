@@ -29,7 +29,6 @@ namespace Astroid {
       bool editor_started = false;
 
       int pid;
-      int stdin;
       int stdout;
       int stderr;
       refptr<Glib::IOChannel> ch_stdout;
