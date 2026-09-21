@@ -41,7 +41,11 @@ namespace Astroid {
                         Glib::SPAWN_SEARCH_PATH | Glib::SPAWN_DO_NOT_REAP_CHILD,
                         sigc::slot <void> (),
                         &pid,
-                        &stdin,
+                        /* Do not ask for a pipe on the editor's stdin: we never write
+                         * to it, and an editor that reads stdin (or forwards it to a
+                         * child) blocks until astroid exits. Leaving this nullptr makes
+                         * GLib attach /dev/null to the editor's stdin. */
+                        nullptr,
                         &stdout,
                         &stderr
                         );
