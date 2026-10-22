@@ -125,22 +125,35 @@ AstroidExtension::AstroidExtension (
   extension = e;
 
   Glib::init ();
+  /* GTK is not initialized in the web process on WebKit >= 2.54.
+   * Gtk::IconTheme needs a default screen, so bring GTK up here. */
+  if (!gtk_init_check (nullptr, nullptr)) {
+    LOG (error) << "tvextension: gtk_init_check failed, icons will not be available.";
+  }
   Gtk::Main::init_gtkmm_internals ();
   Gio::init ();
   logging::add_common_attributes ();
 
   /* load attachment icon */
   Glib::RefPtr<Gtk::IconTheme> theme = Gtk::IconTheme::get_default();
-  attachment_icon = theme->load_icon (
-      "mail-attachment-symbolic",
-      ATTACHMENT_ICON_WIDTH,
-      Gtk::ICON_LOOKUP_USE_BUILTIN );
+  if (theme) {
+    try {
+      attachment_icon = theme->load_icon (
+          "mail-attachment-symbolic",
+          ATTACHMENT_ICON_WIDTH,
+          Gtk::ICON_LOOKUP_USE_BUILTIN );
 
-  /* load marked icon */
-  marked_icon = theme->load_icon (
-      "object-select-symbolic",
-      ATTACHMENT_ICON_WIDTH,
-      Gtk::ICON_LOOKUP_USE_BUILTIN );
+      /* load marked icon */
+      marked_icon = theme->load_icon (
+          "object-select-symbolic",
+          ATTACHMENT_ICON_WIDTH,
+          Gtk::ICON_LOOKUP_USE_BUILTIN );
+    } catch (const Glib::Error &e) {
+      LOG (error) << "tvextension: failed to load icons: " << e.what();
+    }
+  } else {
+    LOG (error) << "tvextension: no icon theme, icons will not be available.";
+  }
 
   /* retrieve socket address */
   gsize sz;
@@ -1410,6 +1423,11 @@ void AstroidExtension::set_attachment_icon (
 {
   GError *err;
 
+  if (!attachment_icon) {
+    LOG (warn) << "tvextension: no attachment icon, skipping.";
+    return;
+  }
+
   WebKitDOMHTMLElement * attachment_icon_img = DomUtils::select (
       WEBKIT_DOM_NODE (div_message),
       ".attachment.icon.first");
@@ -1446,6 +1464,11 @@ void AstroidExtension::set_attachment_icon (
 }
 
 void AstroidExtension::load_marked_icon (WebKitDOMHTMLElement * div_message) {
+
+  if (!marked_icon) {
+    LOG (warn) << "tvextension: no marked icon, skipping.";
+    return;
+  }
 
   WebKitDOMHTMLElement * marked_icon_img = DomUtils::select (
       WEBKIT_DOM_NODE (div_message),
