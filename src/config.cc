@@ -377,12 +377,11 @@ namespace Astroid {
     run_paths.attach_dir = std_paths.attach_dir;
 
     /* read notmuch config */
-    bfs::path notmuch_config_path;
     char * notmuch_config_env = getenv ("NOTMUCH_CONFIG");
     if (notmuch_config_env) {
       notmuch_config_path = Utils::expand(bfs::path (notmuch_config_env));
     } else {
-      notmuch_config_path = Utils::expand(bfs::path (config.get<string>("astroid.notmuch_config")));
+      notmuch_config_path = Utils::expand(bfs::path (config.get<std::string>("astroid.notmuch_config")));
     }
 
     if (is_regular_file (notmuch_config_path)) {

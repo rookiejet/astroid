@@ -20,15 +20,24 @@ using std::cout;
 using std::endl;
 
 int main () {
+  const char * nm_config = getenv ("NOTMUCH_CONFIG");
+  if (nm_config == NULL) {
+    std::cerr << "NOTMUCH_CONFIG is not set, run the tests through tests/run_test.sh" << std::endl;
+    return 1;
+  }
+
   char * path_db = realpath ("./tests/mail/test_mail", NULL);
 
   notmuch_database_t * nm_db;
 
   notmuch_status_t s =
-    notmuch_database_open (
+    notmuch_database_open_with_config (
       path_db,
       notmuch_database_mode_t::NOTMUCH_DATABASE_MODE_READ_ONLY,
-      &nm_db);
+      nm_config,
+      nullptr,
+      &nm_db,
+      nullptr);
 
   (void) (s);
 
@@ -108,10 +117,13 @@ int main () {
    * continue loading the original query */
   notmuch_database_t * nm_db2;
 
-  s = notmuch_database_open (
+  s = notmuch_database_open_with_config (
       path_db,
       notmuch_database_mode_t::NOTMUCH_DATABASE_MODE_READ_WRITE,
-      &nm_db2);
+      nm_config,
+      nullptr,
+      &nm_db2,
+      nullptr);
 
 
   char qry_s[256];
@@ -152,10 +164,13 @@ int main () {
   notmuch_database_close (nm_db2);
 
   /* re-add unread tag */
-  s = notmuch_database_open (
+  s = notmuch_database_open_with_config (
       path_db,
       notmuch_database_mode_t::NOTMUCH_DATABASE_MODE_READ_WRITE,
-      &nm_db2);
+      nm_config,
+      nullptr,
+      &nm_db2,
+      nullptr);
 
 
 

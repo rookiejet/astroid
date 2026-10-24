@@ -14,6 +14,15 @@ namespace bfs = boost::filesystem;
 using std::cout;
 using std::endl;
 
+/* tests are run through tests/run_test.sh, which sets NOTMUCH_CONFIG to the
+ * generated test config */
+static const char * test_notmuch_config () {
+  const char * c = getenv ("NOTMUCH_CONFIG");
+  BOOST_REQUIRE_MESSAGE (c != NULL,
+      "NOTMUCH_CONFIG is not set, run the tests through tests/run_test.sh");
+  return c;
+}
+
 BOOST_AUTO_TEST_SUITE(Notmuch)
 
   BOOST_AUTO_TEST_CASE(read_all_threads)
@@ -24,10 +33,13 @@ BOOST_AUTO_TEST_SUITE(Notmuch)
     notmuch_database_t * nm_db;
 
     notmuch_status_t s =
-      notmuch_database_open (
+      notmuch_database_open_with_config (
         path_db.c_str(),
         notmuch_database_mode_t::NOTMUCH_DATABASE_MODE_READ_ONLY,
-        &nm_db);
+        test_notmuch_config (),
+        nullptr,
+        &nm_db,
+        nullptr);
 
 
     BOOST_CHECK (s == NOTMUCH_STATUS_SUCCESS);
@@ -76,10 +88,13 @@ BOOST_AUTO_TEST_SUITE(Notmuch)
     notmuch_database_t * nm_db;
 
     notmuch_status_t s =
-      notmuch_database_open (
+      notmuch_database_open_with_config (
         path_db.c_str(),
         notmuch_database_mode_t::NOTMUCH_DATABASE_MODE_READ_ONLY,
-        &nm_db);
+        test_notmuch_config (),
+        nullptr,
+        &nm_db,
+        nullptr);
 
 
     BOOST_CHECK (s == NOTMUCH_STATUS_SUCCESS);

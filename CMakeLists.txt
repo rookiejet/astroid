@@ -87,6 +87,11 @@ find_package( Notmuch REQUIRED )
 if (Notmuch_INDEX_FILE_API)
   add_definitions ( -DHAVE_NOTMUCH_INDEX_FILE )
 endif()
+if (NOT Notmuch_OPEN_WITH_CONFIG_API)
+  message (FATAL_ERROR
+    "notmuch >= 0.32 (libnotmuch >= 5.4) is required: "
+    "notmuch_database_open_with_config() was not found in ${Notmuch_LIBRARY}")
+endif()
 
 find_package ( PkgConfig REQUIRED )
 

@@ -7,6 +7,7 @@
 #  Notmuch_LIBRARIES      - link these to use Notmuch
 #  Notmuch_GMIME_VERSION  - the GMime version notmuch was linked against
 #  Notmuch_INDEX_FILE_API - whether Notmuch has the notmuch_database_index_file() API
+#  Notmuch_OPEN_WITH_CONFIG_API - whether Notmuch has the notmuch_database_open_with_config() API
 
 include (LibFindMacros)
 
@@ -66,6 +67,9 @@ include (CheckSymbolExists)
 set (CMAKE_REQUIRED_INCLUDES ${Notmuch_INCLUDE_DIR})
 set (CMAKE_REQUIRED_LIBRARIES ${Notmuch_LIBRARY})
 check_symbol_exists (notmuch_database_index_file notmuch.h Notmuch_INDEX_FILE_API)
+
+# notmuch_database_open_with_config() API presence (libnotmuch >= 5.4 / notmuch 0.32)
+check_symbol_exists (notmuch_database_open_with_config notmuch.h Notmuch_OPEN_WITH_CONFIG_API)
 
 # GMime version notmuch was linked against
 include (GetPrerequisites)

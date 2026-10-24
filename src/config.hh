@@ -43,6 +43,8 @@ namespace Astroid {
        * XDG_RUNTIME_HOME : none
        */
 
+      const bfs::path &get_notmuch_config_path() const { return notmuch_config_path; }
+
       bool test;
 
       StandardPaths std_paths;
@@ -61,6 +63,8 @@ namespace Astroid {
       const int CONFIG_VERSION = 11;
 
     private:
+      bfs::path notmuch_config_path;
+
       ptree setup_default_config (bool);
       void  setup_default_initial_config (ptree &conf, bool accounts = true, bool startup = true);
 

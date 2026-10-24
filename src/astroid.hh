@@ -54,6 +54,7 @@ namespace Astroid {
 
       const boost::property_tree::ptree& config (const std::string& path=std::string()) const;
       const boost::property_tree::ptree& notmuch_config () const;
+      Config* get_config () const { return m_config; }
       const StandardPaths& standard_paths() const;
             RuntimePaths& runtime_paths() const;
       bool  has_notmuch_config ();
