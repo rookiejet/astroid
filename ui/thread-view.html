@@ -62,8 +62,13 @@
     embedded document cannot be accessed.
     Do not add 'allow-scripts' to the sandbox attribute. This would allow the
     document to execute scripts itself.
+    "allow-popups" is required for links with target="_blank" (most HTML
+    newsletters); without it the click is silently discarded before any
+    policy decision is even made. The new-window decision itself is resolved
+    by ThreadView::decide_policy, which opens such links externally and
+    never creates a web view, so no popup can actually appear.
   -->
-  <iframe class="body_iframe" sandbox="allow-same-origin" onload="handleLoadIframe(this);" srcdoc=""></iframe>
+  <iframe class="body_iframe" sandbox="allow-same-origin allow-popups" onload="handleLoadIframe(this);" srcdoc=""></iframe>
 </div>
 
 <script>

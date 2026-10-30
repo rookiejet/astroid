@@ -36,6 +36,11 @@ namespace Astroid {
       WebKitPolicyDecisionType decision_type,
       gpointer user_data);
 
+  extern "C" WebKitWebView * ThreadView_create (
+      WebKitWebView * w,
+      WebKitNavigationAction * nav_action,
+      gpointer user_data);
+
   class ThreadView : public Mode {
     friend PageClient;
 
@@ -71,6 +76,7 @@ namespace Astroid {
 # endif
 
       ustring open_external_link;
+      void    navigate_uri (ustring);
       void    open_link (ustring);
       void    do_open_link (ustring);
 
@@ -195,6 +201,10 @@ namespace Astroid {
           WebKitWebView * w,
           WebKitPolicyDecision * decision,
           WebKitPolicyDecisionType decision_type);
+
+      WebKitWebView * create (
+          WebKitWebView * w,
+          WebKitNavigationAction * nav_action);
 
       void grab_focus ();
 

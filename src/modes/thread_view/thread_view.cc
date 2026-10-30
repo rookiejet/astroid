@@ -127,6 +127,10 @@ namespace Astroid {
         G_CALLBACK(ThreadView_decide_policy),
         (gpointer) this);
 
+    g_signal_connect (webview, "create",
+        G_CALLBACK(ThreadView_create),
+        (gpointer) this);
+
     load_html ();
 
     register_keys ();
@@ -177,7 +181,14 @@ namespace Astroid {
 
     switch (decision_type) {
       case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION: // navigate to {{{
+      case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION: // target="_blank" links arrive here
         {
+          /* Links with target="_blank" (most HTML newsletters) trigger a
+           * new-window policy decision instead of a plain navigation action.
+           * Astroid does not create extra web views, so route a genuine
+           * link click through the same scheme dispatcher as a normal
+           * navigation; window.open() requests (navigation type OTHER)
+           * are still ignored below. */
           WebKitNavigationPolicyDecision * navigation_decision = WEBKIT_NAVIGATION_POLICY_DECISION (decision);
           WebKitNavigationAction * nav_action = webkit_navigation_policy_decision_get_navigation_action (navigation_decision);
 
@@ -189,31 +200,15 @@ namespace Astroid {
             const gchar * uri_c = webkit_uri_request_get_uri (
                 webkit_navigation_action_get_request (nav_action));
 
+            navigate_uri (uri_c == nullptr ? ustring () : ustring (uri_c));
 
-            ustring uri (uri_c);
-            LOG (info) << "tv: navigating to: " << uri;
-
-            ustring scheme = Glib::uri_parse_scheme (uri);
-
-            if (scheme == "mailto") {
-              main_window->add_mode (new EditMessage (main_window, uri));
-
-            } else if (scheme == "id" || scheme == "mid" ) {
-              main_window->add_mode (new ThreadIndex (main_window, uri));
-
-            } else if (scheme == "http" || scheme == "https" || scheme == "ftp") {
-              open_link (uri);
-
-            } else {
-
-              LOG (error) << "tv: unknown uri scheme. not opening.";
-            }
+          } else if (decision_type == WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION) {
+            /* Not a user click: window.open() and friends. Astroid never
+             * creates extra web views, so ignore explicitly instead of
+             * letting the default decision spin up a phantom one. */
+            webkit_policy_decision_ignore (decision);
           }
         } // }}}
-        break;
-
-      case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION:
-        webkit_policy_decision_ignore (decision);
         break;
 
       default:
@@ -222,6 +217,55 @@ namespace Astroid {
     }
 
     return true; // stop event
+  }
+
+  /* new web view requests: context menu "Open Link" / "Open Link in New
+   * Window" on a link with target="_blank" arrives only here, without any
+   * policy decision being emitted. Astroid never creates extra web views;
+   * route the requested uri through the usual scheme dispatcher and refuse
+   * the view. */
+  extern "C" WebKitWebView * ThreadView_create (
+      WebKitWebView * w,
+      WebKitNavigationAction * nav_action,
+      gpointer user_data) {
+
+    return ((ThreadView *) user_data)->create (w, nav_action);
+  }
+
+  WebKitWebView * ThreadView::create (
+      WebKitWebView * /* w */,
+      WebKitNavigationAction * nav_action)
+  {
+    const gchar * uri_c = webkit_uri_request_get_uri (
+        webkit_navigation_action_get_request (nav_action));
+
+    if (uri_c != nullptr && *uri_c != '\0') {
+      navigate_uri (ustring (uri_c));
+    } else {
+      LOG (error) << "tv: create request without uri. ignoring.";
+    }
+
+    return nullptr;
+  }
+
+  void ThreadView::navigate_uri (ustring uri) {
+    LOG (info) << "tv: navigating to: " << uri;
+
+    ustring scheme = Glib::uri_parse_scheme (uri);
+
+    if (scheme == "mailto") {
+      main_window->add_mode (new EditMessage (main_window, uri));
+
+    } else if (scheme == "id" || scheme == "mid" ) {
+      main_window->add_mode (new ThreadIndex (main_window, uri));
+
+    } else if (scheme == "http" || scheme == "https" || scheme == "ftp") {
+      open_link (uri);
+
+    } else {
+
+      LOG (error) << "tv: unknown uri scheme. not opening.";
+    }
   }
 
   void ThreadView::open_link (ustring uri) {
