@@ -91,6 +91,20 @@
     iframe.height = iframe.contentWindow.document.body.scrollHeight;
   }
 
+  function observeIframeBody(iframe) {
+    /* Re-size whenever the content changes size. Images enabled with C-i
+     * (thread_view.show_remote_images) are put into the DOM in place and
+     * load asynchronously long after the iframe load event, so the one-shot
+     * sizing above would leave the lower part of the message cut off. */
+    if (iframe._sizeObserver) iframe._sizeObserver.disconnect();
+    const body = iframe.contentWindow.document.body;
+    if (!body) return;
+    iframe._sizeObserver = new ResizeObserver(() => {
+      if (parseInt(iframe.height, 10) !== body.scrollHeight) sizeIframe(iframe);
+    });
+    iframe._sizeObserver.observe(body);
+  }
+
   function getParentWithClass(element, c) {
     p = element.parentElement;
     while (p != document.body && !p.classList.contains(c)) {
@@ -102,6 +116,7 @@
 
   function handleLoadIframe(iframe) {
     sizeIframe(iframe);
+    observeIframeBody(iframe);
     const email = getParentWithClass(iframe, "email");
     if (email != document.body)
       onSetFocused(email, _ => sizeIframe(iframe));
